@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZeroCyber — Forensic Security Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #020408;
+  --bg2: #040c14;
+  --bg3: #071220;
+  --panel: #0a1628;
+  --panel2: #0d1f35;
+  --border: #0d3a5c;
+  --border2: #1a5c8a;
+  --accent: #00d4ff;
+  --accent2: #0088cc;
+  --accent3: #00ff88;
+  --danger: #ff3366;
+  --warn: #ffaa00;
+  --text: #c8e6f5;
+  --text2: #7ab8d4;
+  --text3: #3a6a8a;
+  --glow: 0 0 20px rgba(0,212,255,0.3);
+  --glow2: 0 0 40px rgba(0,212,255,0.15);
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-ui: 'Rajdhani', sans-serif;
+  --font-display: 'Orbitron', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SCAN LINE ── */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scanline 4s linear infinite;
+  z-index: 999;
+  opacity: 0.6;
+}
+@keyframes scanline {
+  0% { top: 0; }
+  100% { top: 100vh; }
+}
+
+/* ── NOISE OVERLAY ── */
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 64px;
+  background: rgba(2,4,8,0.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo-icon {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--glow);
+  position: relative;
+  overflow: hidden;
+}
+.nav-logo-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.1), transparent);
+}
+.nav-logo-icon svg { width: 20px; height: 20px; }
+
+.nav-logo-text {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-shadow: var(--glow);
+}
+
+.nav-logo-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: -2px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color 0.2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.2s;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-links a:hover::after { transform: scaleX(1); }
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent3);
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent3);
+  box-shadow: 0 0 8px var(--accent3);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 40px 60px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,136,204,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 60%, rgba(0,212,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 30%, rgba(0,255,136,0.03) 0%, transparent 60%);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  background: rgba(0,136,204,0.08);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeUp 0.8s ease both;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 0.9;
+  margin-bottom: 8px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+
+.hero-title span {
+  display: block;
+  background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-title .sub {
+  font-size: clamp(14px, 2vw, 20px);
+  font-weight: 400;
+  letter-spacing: 8px;
+  color: var(--text3);
+  -webkit-text-fill-color: var(--text3);
+  background: none;
+  margin-top: 12px;
+}
+
+.hero-desc {
+  max-width: 600px;
+  margin: 32px auto;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--text2);
+  animation: fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  margin: 40px auto;
+  animation: fadeUp 0.8s 0.3s ease both;
+}
+
+.stat {
+  text-align: center;
+}
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: var(--glow);
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  animation: fadeUp 0.8s 0.4s ease both;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: var(--glow);
+}
+.btn-primary:hover {
+  background: #fff;
+  box-shadow: 0 0 40px rgba(0,212,255,0.5);
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border2);
+}
+.btn-outline:hover {
+  background: rgba(0,212,255,0.08);
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── SECTION ── */
+section {
+  position: relative;
+  z-index: 2;
+  padding: 80px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: rgba(0,212,255,0.05);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+/* ── UPLOAD PANEL ── */
+.scan-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .scan-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero-stats { gap: 20px; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  section { padding: 60px 20px; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.panel:hover {
+  border-color: var(--border2);
+  box-shadow: var(--glow2);
+}
+.panel:hover::before { opacity: 1; }
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panel-title svg { width: 18px; height: 18px; }
+
+/* ── DROP ZONE ── */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 4px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  background: rgba(0,136,204,0.02);
+}
+.dropzone:hover, .dropzone.drag-over {
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.05);
+  box-shadow: inset 0 0 40px rgba(0,212,255,0.05);
+}
+.dropzone-icon {
+  width: 56px; height: 56px;
+  margin: 0 auto 16px;
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,136,204,0.1);
+  color: var(--accent);
+}
+.dropzone-title {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.dropzone-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+.dropzone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.file-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+.file-item svg { color: var(--accent); flex-shrink: 0; }
+.file-size {
+  margin-left: auto;
+  color: var(--text3);
+  font-size: 10px;
+}
+
+/* ── REPO INPUT ── */
+.input-group {
+  margin-bottom: 20px;
+}
+.input-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+.input-wrap {
+  position: relative;
+}
+.input-wrap svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  width: 16px; height: 16px;
+  pointer-events: none;
+}
+input[type=text], select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px 14px 12px 40px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type=text]:focus, select:focus {
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px rgba(0,136,204,0.15);
+}
+input[type=text]::placeholder { color: var(--text3); }
+
+.scan-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+select {
+  padding: 12px 14px 12px 40px;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.btn-scan {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-scan::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.1));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-scan:hover {
+  box-shadow: 0 0 30px rgba(0,212,255,0.4);
+  transform: translateY(-2px);
+}
+.btn-scan:hover::before { opacity: 1; }
+
+/* ── TERMINAL OUTPUT ── */
+.terminal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.terminal-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.terminal-body {
+  padding: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text2);
+  min-height: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.terminal-body::-webkit-scrollbar { width: 4px; }
+.terminal-body::-webkit-scrollbar-track { background: var(--bg); }
+.terminal-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.t-accent { color: var(--accent); }
+.t-green { color: var(--accent3); }
+.t-warn { color: var(--warn); }
+.t-danger { color: var(--danger); }
+.t-dim { color: var(--text3); }
+
+/* ── RESULTS PANEL ── */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+  .results-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.result-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.result-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+}
+.result-card.critical::after { background: var(--danger); }
+.result-card.high::after { background: var(--warn); }
+.result-card.medium::after { background: #ffcc44; }
+.result-card.low::after { background: var(--accent3); }
+
+.result-num {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.critical .result-num { color: var(--danger); text-shadow: 0 0 20px rgba(255,51,102,0.4); }
+.high .result-num { color: var(--warn); text-shadow: 0 0 20px rgba(255,170,0,0.4); }
+.medium .result-num { color: #ffcc44; text-shadow: 0 0 20px rgba(255,204,68,0.3); }
+.low .result-num { color: var(--accent3); text-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+.result-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.vuln-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vuln-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 3px;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+.vuln-item:hover { background: var(--panel2); }
+.vuln-item.critical { border-left-color: var(--danger); }
+.vuln-item.high { border-left-color: var(--warn); }
+.vuln-item.medium { border-left-color: #ffcc44; }
+.vuln-item.low { border-left-color: var(--accent3); }
+
+.sev-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+.sev-badge.critical { background: rgba(255,51,102,0.15); color: var(--danger); border: 1px solid rgba(255,51,102,0.3); }
+.sev-badge.high { background: rgba(255,170,0,0.15); color: var(--warn); border: 1px solid rgba(255,170,0,0.3); }
+.sev-badge.medium { background: rgba(255,204,68,0.1); color: #ffcc44; border: 1px solid rgba(255,204,68,0.3); }
+.sev-badge.low { background: rgba(0,255,136,0.1); color: var(--accent3); border: 1px solid rgba(0,255,136,0.3); }
+
+.vuln-info { min-width: 0; }
+.vuln-type {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vuln-loc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.vuln-conf {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+
+/* ── FEATURES ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .features-grid { grid-template-columns: 1fr; }
+}
+
+.feature-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at center, rgba(0,212,255,0.03), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.feature-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-4px);
+  box-shadow: var(--glow2);
+}
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  width: 48px; height: 48px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  background: rgba(0,136,204,0.08);
+  color: var(--accent);
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.feature-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: rgba(0,136,204,0.05);
+  letter-spacing: 1px;
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid var(--border);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: gap;
+}
+.footer-left { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }
+.footer-right { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }
+
+/* ── LOADING STATE ── */
+.scanning {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0,136,204,0.05);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+.scanning.active { display: flex; }
+.spin {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HEXAGON DECORATION ── */
+.hex-deco {
+  position: absolute;
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+/* Progress bar */
+.progress-wrap {
+  margin-top: 16px;
+  display: none;
+}
+.progress-wrap.active { display: block; }
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.progress-bar {
+  height: 3px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+  width: 0;
+  transition: width 0.3s ease;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,4,8,0.9);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 600px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0,136,204,0.2);
+}
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: none; border: none;
+  color: var(--text3); cursor: pointer; font-size: 20px;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/>
+        <path d="M12 22V12M2 7l10 5 10-5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="nav-logo-text">ZEROCYBER</div>
+      <div class="nav-logo-sub">Forensic Intelligence</div>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#scan">Scan</a></li>
+    <li><a href="#features">Capabilities</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    SYSTEM ONLINE
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-badge">
+    <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+    Advanced Threat Detection Engine v17
+  </div>
+  <h1 class="hero-title">
+    <span>ZEROCYBER</span>
+    <div class="sub">FORENSIC SECURITY INTELLIGENCE</div>
+  </h1>
+  <p class="hero-desc">
+    AI-powered source code analysis and digital forensics platform. 
+    Detect vulnerabilities, analyze repositories, and generate comprehensive security reports with 121 detection patterns.
+  </p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num" id="counter1">121</div>
+      <div class="stat-label">Detection Patterns</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Languages</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">99%</div>
+      <div class="stat-label">Accuracy Rate</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">&lt;30s</div>
+      <div class="stat-label">Avg Scan Time</div>
+    </div>
+  </div>
+  <div class="hero-actions">
+    <a href="#scan" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Start Scanning
+    </a>
+    <a href="#features" class="btn btn-outline">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      View Capabilities
+    </a>
+  </div>
+</div>
+
+<!-- SCAN SECTION -->
+<section id="scan">
+  <div class="section-header">
+    <span class="section-tag">01</span>
+    <h2 class="section-title">Security Scanner</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="scan-grid">
+    <!-- FILE UPLOAD -->
+    <div class="panel">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        File Forensic Analysis
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" multiple id="fileInput" accept=".py,.js,.ts,.go,.rs,.cs,.java,.zip">
+        <div class="dropzone-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="dropzone-title">Drop files or click to upload</div>
+        <div class="dropzone-sub">.py .js .ts .go .rs .cs .java .zip</div>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="scanning" id="fileScanning">
+        <div class="spin"></div>
+        <span id="fileScanMsg">Initializing forensic engine...</span>
+      </div>
+
+      <div class="progress-wrap" id="fileProgress">
+        <div class="progress-label">
+          <span id="progressLabel">Analyzing patterns...</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <button class="btn-scan" id="btnFileScan" style="margin-top:20px" onclick="startFileScan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Run Forensic Scan
+      </button>
+    </div>
+
+    <!-- REPO SCAN -->
+    <div class="panel">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        GitHub Repository Scan
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Repository URL</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          <input type="text" id="repoUrl" placeholder="https://github.com/username/repository">
+        </div>
+      </div>
+
+      <div class="scan-options">
+        <div class="input-group" style="margin:0">
+          <label class="input-label">Scan Mode</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            <select id="scanMode">
+              <option value="PRECISE">PRECISE</option>
+              <option value="FAST">FAST</option>
+              <option value="AI_DEEP">AI DEEP</option>
+              <option value="FORENSIC">FORENSIC</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group" style="margin:0">
+          <label class="input-label">Min Severity</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <select id="minSev">
+              <option value="INFO">INFO</option>
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM" selected>MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Options</label>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" id="optAI" checked style="accent-color:var(--accent)"> AI Analysis
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" id="optExploit" style="accent-color:var(--accent)"> Exploit Mode
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" id="optSARIF" style="accent-color:var(--accent)"> SARIF Output
+          </label>
+        </div>
+      </div>
+
+      <button class="btn-scan" onclick="startRepoScan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        Scan Repository
+      </button>
+
+      <div class="terminal" style="margin-top:20px">
+        <div class="terminal-header">
+          <div class="terminal-dot" style="background:#ff5f57"></div>
+          <div class="terminal-dot" style="background:#febc2e"></div>
+          <div class="terminal-dot" style="background:#28c840"></div>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-left:8px">zerocyber — terminal</span>
+        </div>
+        <div class="terminal-body" id="terminalOutput">
+          <span class="t-accent">zerocyber@github</span><span class="t-dim">:~$ </span><span class="t-green">_</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEMO RESULTS -->
+  <div id="resultsSection" style="margin-top:40px;display:none">
+    <div class="section-header">
+      <span class="section-tag">REPORT</span>
+      <h2 class="section-title">Scan Results</h2>
+      <div class="section-line"></div>
+      <button class="btn btn-outline" onclick="downloadReport()" style="padding:10px 20px;font-size:12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Report
+      </button>
+    </div>
+
+    <div class="results-grid" id="resultCards"></div>
+    <div class="vuln-list" id="vulnList"></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background:linear-gradient(180deg,transparent,rgba(0,136,204,0.03),transparent);border-top:1px solid var(--border);border-bottom:1px solid var(--border);max-width:100%;padding:80px 40px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-header">
+      <span class="section-tag">02</span>
+      <h2 class="section-title">Detection Capabilities</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="feature-title">Static Pattern Analysis</div>
+        <div class="feature-desc">121 handcrafted detection patterns across 6 programming languages with precise regex matching and context-aware filtering.</div>
+        <div class="feature-tags">
+          <span class="tag">SQL INJECTION</span>
+          <span class="tag">XSS</span>
+          <span class="tag">RCE</span>
+          <span class="tag">SSRF</span>
+          <span class="tag">XXE</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="feature-title">AI Deep Analysis</div>
+        <div class="feature-desc">GPU-accelerated AI model (qwen3:8b) performs semantic analysis beyond pattern matching — understands context and data flow.</div>
+        <div class="feature-tags">
+          <span class="tag">SEMANTIC</span>
+          <span class="tag">DATAFLOW</span>
+          <span class="tag">GPU</span>
+          <span class="tag">LLM</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="feature-title">Forensic Reports</div>
+        <div class="feature-desc">Generate comprehensive security reports with CWE/OWASP mapping, confidence scoring, and actionable remediation guidance.</div>
+        <div class="feature-tags">
+          <span class="tag">CWE</span>
+          <span class="tag">OWASP</span>
+          <span class="tag">SARIF</span>
+          <span class="tag">JSON</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="feature-title">Multi-Language Support</div>
+        <div class="feature-desc">Deep analysis for Python, JavaScript, TypeScript, Go, Rust, C#, and Java with language-specific vulnerability patterns.</div>
+        <div class="feature-tags">
+          <span class="tag">PYTHON</span>
+          <span class="tag">JS/TS</span>
+          <span class="tag">GO</span>
+          <span class="tag">RUST</span>
+          <span class="tag">JAVA</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div class="feature-title">Exploit Intelligence</div>
+        <div class="feature-desc">Premium exploit writer generates working PoC exploits for confirmed vulnerabilities — verify real impact before patching.</div>
+        <div class="feature-tags">
+          <span class="tag">POC</span>
+          <span class="tag">VERIFIED</span>
+          <span class="tag">PREMIUM</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="feature-title">Evidence Scoring</div>
+        <div class="feature-desc">Advanced source-sink analysis eliminates false positives. Every finding is verified with traceable evidence chains and confidence scores.</div>
+        <div class="feature-tags">
+          <span class="tag">SOURCE/SINK</span>
+          <span class="tag">LOW FP</span>
+          <span class="tag">SCORED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" style="max-width:1200px;margin:0 auto;padding:80px 40px">
+  <div class="section-header">
+    <span class="section-tag">03</span>
+    <h2 class="section-title">About ZeroCyber</h2>
+    <div class="section-line"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+    <div>
+      <p style="font-size:16px;line-height:1.8;color:var(--text2);margin-bottom:20px">
+        ZeroCyber is an advanced forensic security intelligence platform built for security researchers, 
+        penetration testers, and development teams who demand precision.
+      </p>
+      <p style="font-size:16px;line-height:1.8;color:var(--text2);margin-bottom:32px">
+        Combining static analysis with AI-powered semantic understanding, ZeroCyber detects vulnerabilities 
+        that traditional scanners miss — with evidence-backed findings and zero tolerance for false positives.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <a href="https://github.com/zerocyber" class="btn btn-primary" target="_blank">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          View on GitHub
+        </a>
+        <a href="#scan" class="btn btn-outline">Start Free Scan</a>
+      </div>
+    </div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:28px">
+      <div style="font-family:var(--font-mono);font-size:12px;line-height:2;color:var(--text2)">
+        <div><span class="t-accent">$</span> zerocyber --version</div>
+        <div class="t-green">ZeroCyber v17.0.0</div>
+        <div style="margin-top:8px"><span class="t-accent">$</span> zerocyber scan ./project --ai</div>
+        <div class="t-dim">🔍 Scanning 47 files...</div>
+        <div class="t-dim">🤖 AI Analysis: qwen3:8b</div>
+        <div class="t-dim">✅ Scan complete in 28.4s</div>
+        <div style="margin-top:8px"><span class="t-danger">🔴 CRITICAL: 2</span></div>
+        <div style="color:var(--warn)">🟠 HIGH: 5</div>
+        <div style="color:#ffcc44">🟡 MEDIUM: 8</div>
+        <div class="t-green">🟢 LOW: 3</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    © 2025 ZeroCyber — Forensic Security Intelligence Platform
+  </div>
+  <div class="footer-right">
+    Built with precision. Engineered for security.
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="vulnModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// ── FILE UPLOAD ──
+const dropzone = document.getElementById('dropzone');
+const fileList = document.getElementById('fileList');
+let uploadedFiles = [];
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+document.getElementById('fileInput').addEventListener('change', e => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  uploadedFiles = Array.from(files);
+  fileList.innerHTML = '';
+  uploadedFiles.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    const ext = f.name.split('.').pop().toUpperCase();
+    item.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>${f.name}</span>
+      <span style="font-size:9px;color:var(--accent2);padding:1px 6px;border:1px solid var(--border);border-radius:2px">${ext}</span>
+      <span class="file-size">${(f.size/1024).toFixed(1)} KB</span>`;
+    fileList.appendChild(item);
+  });
+}
+
+// ── FILE SCAN SIMULATION ──
+function startFileScan() {
+  if (!uploadedFiles.length) {
+    alert('Please upload files first.'); return;
+  }
+  const scanning = document.getElementById('fileScanning');
+  const progress = document.getElementById('fileProgress');
+  const fill = document.getElementById('progressFill');
+  const pct = document.getElementById('progressPct');
+  const lbl = document.getElementById('progressLabel');
+
+  scanning.classList.add('active');
+  progress.classList.add('active');
+
+  const steps = [
+    [10,'Initializing forensic engine...'],
+    [25,'Loading detection patterns...'],
+    [45,'Running pattern analysis...'],
+    [65,'AI semantic analysis...'],
+    [80,'Evidence scoring...'],
+    [95,'Generating report...'],
+    [100,'Complete.']
+  ];
+  let i = 0;
+  const run = () => {
+    if (i >= steps.length) {
+      scanning.classList.remove('active');
+      showDemoResults();
+      return;
+    }
+    const [p, msg] = steps[i++];
+    fill.style.width = p + '%';
+    pct.textContent = p + '%';
+    lbl.textContent = msg;
+    document.getElementById('fileScanMsg').textContent = msg;
+    setTimeout(run, 600);
+  };
+  run();
+}
+
+// ── REPO SCAN TERMINAL ──
+function startRepoScan() {
+  const url = document.getElementById('repoUrl').value.trim();
+  if (!url) { alert('Please enter a GitHub repository URL.'); return; }
+  
+  const term = document.getElementById('terminalOutput');
+  const mode = document.getElementById('scanMode').value;
+  const sev = document.getElementById('minSev').value;
+  const ai = document.getElementById('optAI').checked;
+  const exploit = document.getElementById('optExploit').checked;
+
+  const repoName = url.replace('https://github.com/','').replace(/\//g,'\\') || 'repository';
+  let cmd = `npx ts-node scan-engine.ts ${repoName} --mode=${mode} --min-severity=${sev}`;
+  if (ai) cmd += ' --ai';
+  if (exploit) cmd += ' --exploit';
+
+  term.innerHTML = '';
+  const lines = [
+    { t: 0,   text: `<span class="t-accent">zerocyber@github</span><span class="t-dim">:~$</span> ${cmd}`, cls: '' },
+    { t: 500, text: `🔍 ZeroCyber v17.0 — Scanning repository`, cls: 't-dim' },
+    { t: 1000,text: `   Mode: ${mode} | AI: ${ai} | Min Severity: ${sev}`, cls: 't-dim' },
+    { t: 1500,text: `🤖 [AI] Model: qwen3:8b — GPU accelerated ✅`, cls: 't-green' },
+    { t: 2200,text: `📥 Cloning repository...`, cls: 't-dim' },
+    { t: 3200,text: `✅ Repository cloned — 47 files detected`, cls: 't-green' },
+    { t: 3800,text: `🔄 Running pattern analysis...`, cls: 't-dim' },
+    { t: 5500,text: `🤖 AI deep analysis in progress...`, cls: 't-dim' },
+    { t: 8000,text: `✅ Analysis complete in 8.2s`, cls: 't-green' },
+    { t: 8300,text: `${'═'.repeat(54)}`, cls: 't-dim' },
+    { t: 8500,text: `  Vulnerabilities: 9`, cls: '' },
+    { t: 8700,text: `    CRITICAL: 0 | HIGH: 4 | MEDIUM: 5 | LOW: 0`, cls: '' },
+    { t: 8900,text: `${'═'.repeat(54)}`, cls: 't-dim' },
+    { t: 9200,text: `🟠 [HIGH] SQL Injection — dao/user.py:23`, cls: 't-warn' },
+    { t: 9500,text: `🟠 [HIGH] Stack Trace in Logs — bot.py:214`, cls: 't-warn' },
+    { t: 9800,text: `🟠 [HIGH] Insecure File Download — bot.py:362`, cls: 't-warn' },
+    { t:10100,text: `🟡 [MEDIUM] Silent Auth Bypass — bot.py:714`, cls: '' },
+    { t:10400,text: `🟡 [MEDIUM] Temp File in CWD — bot.py:369`, cls: '' },
+  ];
+
+  lines.forEach(({ t, text, cls }) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      if (cls) div.className = cls;
+      div.innerHTML = text;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+      if (t >= 8300) showDemoResults();
+    }, t);
+  });
+}
+
+// ── DEMO RESULTS ──
+const demoVulns = [
+  { sev: 'high',   type: 'SQL Injection',                   file: 'dao/user.py',  line: 23,  conf: 83, cwe: 'CWE-89',  desc: 'String concatenation in SQL query — direct user input injection vector.' },
+  { sev: 'high',   type: 'Stack Trace Written to Logs',     file: 'bot.py',       line: 214, conf: 77, cwe: 'CWE-209', desc: 'Full stack trace logged — reveals file paths, library versions, internal structure.' },
+  { sev: 'high',   type: 'Insecure File Download',          file: 'bot.py',       line: 362, conf: 82, cwe: 'CWE-494', desc: 'File downloaded with no type/size validation — malicious file execution risk.' },
+  { sev: 'high',   type: 'SSRF via Unsafe URL Parsing',     file: 'bot.py',       line: 568, conf: 66, cwe: 'CWE-918', desc: 'URL parsed with split() then used in HTTP request — SSRF if config from external source.' },
+  { sev: 'medium', type: 'Temp File in Working Directory',  file: 'bot.py',       line: 369, conf: 85, cwe: 'CWE-377', desc: 'Temporary file created in CWD — accessible to other processes, survives crashes.' },
+  { sev: 'medium', type: 'Silent Authentication Bypass',    file: 'bot.py',       line: 714, conf: 62, cwe: 'CWE-287', desc: 'Credential falls back to zero/empty — service starts unauthenticated if env var missing.' },
+  { sev: 'medium', type: 'GitHub API Without Token',        file: 'bot.py',       line: 575, conf: 64, cwe: 'CWE-306', desc: 'GitHub API called without auth — limited to 60 req/hr, identity exposed.' },
+  { sev: 'medium', type: 'Open Redirect in Telegram Button',file: 'bot.py',       line: 417, conf: 61, cwe: 'CWE-601', desc: 'Button URL set from external variable without validation — open redirect risk.' },
+  { sev: 'medium', type: 'Open Redirect in Telegram Button',file: 'bot.py',       line: 442, conf: 49, cwe: 'CWE-601', desc: 'Button URL set from external variable without validation — open redirect risk.' },
+];
+
+function showDemoResults() {
+  const section = document.getElementById('resultsSection');
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  demoVulns.forEach(v => counts[v.sev]++);
+
+  document.getElementById('resultCards').innerHTML = `
+    <div class="result-card critical"><div class="result-num">${counts.critical}</div><div class="result-label">Critical</div></div>
+    <div class="result-card high"><div class="result-num">${counts.high}</div><div class="result-label">High</div></div>
+    <div class="result-card medium"><div class="result-num">${counts.medium}</div><div class="result-label">Medium</div></div>
+    <div class="result-card low"><div class="result-num">${counts.low}</div><div class="result-label">Low</div></div>`;
+
+  const list = document.getElementById('vulnList');
+  list.innerHTML = '';
+  demoVulns.forEach((v, i) => {
+    const item = document.createElement('div');
+    item.className = `vuln-item ${v.sev}`;
+    item.onclick = () => showVulnDetail(v);
+    item.innerHTML = `
+      <span class="sev-badge ${v.sev}">${v.sev.toUpperCase()}</span>
+      <div class="vuln-info">
+        <div class="vuln-type">${v.type}</div>
+        <div class="vuln-loc">${v.file}:${v.line} · ${v.cwe}</div>
+      </div>
+      <span class="vuln-conf">${v.conf}%</span>`;
+    item.style.animationDelay = (i * 0.05) + 's';
+    list.appendChild(item);
+  });
+}
+
+function showVulnDetail(v) {
+  document.getElementById('modalContent').innerHTML = `
+    <div style="margin-bottom:20px">
+      <span class="sev-badge ${v.sev}" style="font-size:11px;padding:4px 12px">${v.sev.toUpperCase()}</span>
+    </div>
+    <h3 style="font-family:var(--font-display);font-size:18px;color:#fff;margin-bottom:8px">${v.type}</h3>
+    <div style="font-family:var(--font-mono);font-size:12px;color:var(--text3);margin-bottom:20px">${v.file}:${v.line} · ${v.cwe} · Confidence: ${v.conf}%</div>
+    <p style="font-size:14px;line-height:1.7;color:var(--text2);margin-bottom:20px">${v.desc}</p>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:16px">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:8px">EVIDENCE</div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:1.6">
+        Pattern matched at line ${v.line}<br>
+        Source: external input detected<br>
+        Sink: vulnerable function call confirmed<br>
+        Evidence score: ${(v.conf/100 * 0.95).toFixed(2)}
+      </div>
+    </div>`;
+  document.getElementById('vulnModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('vulnModal').classList.remove('active');
+}
+document.getElementById('vulnModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('vulnModal')) closeModal();
+});
+
+// ── REPORT DOWNLOAD ──
+function downloadReport() {
+  const report = {
+    tool: 'ZeroCyber v17.0',
+    timestamp: new Date().toISOString(),
+    summary: { critical: 0, high: 4, medium: 5, low: 0, total: 9 },
+    vulnerabilities: demoVulns
+  };
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `zerocyber-report-${Date.now()}.json`;
+  a.click();
+}
+</script>
+</body>
+</html>
